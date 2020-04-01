@@ -96,6 +96,9 @@ class App(QWidget):
 
     def openImage(self):
         image_path, _ = QFileDialog.getOpenFileName()
+        print(image_path)
+        if image_path == "":
+            return
         self.current_file = os.path.basename(image_path)
         self.set_image_to_label(image_path)
         self.groupbox.setVisible(True)
