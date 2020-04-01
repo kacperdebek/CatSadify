@@ -20,10 +20,11 @@ class App(QWidget):
         self.width = 800
         self.height = 600
         self.current_file = 'res/empty.png'
+        self.current_path = ''
         self.cat_cascade = cv2.CascadeClassifier('res/haarcascade_frontalcatface.xml')
         self.cat_ext_cascade = cv2.CascadeClassifier('res/haarcascade_frontalcatface_extended.xml')
-        self.scale_factor = 1.05  # try different values of scale factor like 1.05, 1.3, etc
-        self.neighbours = 3  # try different values of minimum neighbours like 3,4,5,6
+        self.scale_factor = 1.05
+        self.neighbours = 3
         self.slider_scale_factor = QSlider(Qt.Horizontal)
         self.slider_neighbours = QSlider(Qt.Horizontal)
         self.param_visibility = False
@@ -73,12 +74,13 @@ class App(QWidget):
         self.groupbox.setVisible(self.param_visibility)
 
         # button for loading images to GUI
+
         load_button = QPushButton("Load image")
         load_button.clicked.connect(lambda: self.openImage())
 
         # button for activating image processing
         process_button = QPushButton("Find face")
-        process_button.clicked.connect(lambda: self.processImage('res', self.current_file))
+        process_button.clicked.connect(lambda: self.processImage(self.current_path))
 
         # setting up elements on the layout
         grid_layout.addWidget(self.label, 0, 0)
@@ -102,6 +104,7 @@ class App(QWidget):
         self.current_file = os.path.basename(image_path)
         self.set_image_to_label(image_path)
         self.groupbox.setVisible(True)
+        self.current_path = image_path
 
     def set_image_to_label(self, image_path):
         pixmap = QPixmap(image_path)
@@ -112,8 +115,11 @@ class App(QWidget):
         pixmap = QPixmap(image)
         self.label.setPixmap(pixmap.scaled(self.label.size(), QtCore.Qt.IgnoreAspectRatio))
 
-    def processImage(self, image_dir, image_filename):
-        img = cv2.imread(image_dir + '/' + image_filename)
+    def processImage(self, image_dir):
+        if image_dir == '':
+            return
+        print("processing")
+        img = cv2.imread(image_dir)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         cats = self.cat_cascade.detectMultiScale(gray, scaleFactor=self.scale_factor, minNeighbors=self.neighbours)
