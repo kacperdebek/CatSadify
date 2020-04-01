@@ -4,8 +4,10 @@ import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QPushButton, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QPushButton, QFileDialog, QGroupBox, \
+    QVBoxLayout, QSlider
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QImage
+
 
 class App(QWidget):
 
@@ -13,39 +15,56 @@ class App(QWidget):
         super().__init__()
         self.label = QLabel(self)
         self.label.resize(550, 500)
-        self.setImageToLabel('res/empty.png')
+        self.set_image_to_label('res/empty.png')
         self.title = 'CatSadify'
         self.width = 800
         self.height = 600
-        self.currentFile = 'res/empty.png'
+        self.current_file = 'res/empty.png'
         self.cat_cascade = cv2.CascadeClassifier('res/haarcascade_frontalcatface.xml')
         self.cat_ext_cascade = cv2.CascadeClassifier('res/haarcascade_frontalcatface_extended.xml')
         self.scale_factor = 1.05  # try different values of scale factor like 1.05, 1.3, etc
         self.neighbours = 3  # try different values of minimum neighbours like 3,4,5,6
+        self.slider_scale_factor = QSlider(Qt.Horizontal)
+        self.slider_neighbours = QSlider(Qt.Horizontal)
         self.initUI()
 
     def initUI(self):
+        # setup window
         self.setWindowTitle(self.title)
         self.setFixedSize(self.width, self.height)
         self.setAutoFillBackground(True)
 
+        # setup colors
         palette = self.palette()
         palette.setColor(self.backgroundRole(), QColor(56, 56, 61, 127))
+        palette.setColor(self.foregroundRole(), QColor(255, 255, 255, 200))
         self.setPalette(palette)
 
-        gridLayout = QGridLayout()
+        grid_layout = QGridLayout()
 
-        loadButton = QPushButton("Load image")
-        loadButton.clicked.connect(lambda: self.openImage())
+        # setup parameters box
+        groupbox = QGroupBox("Parameters")
+        groupbox.setCheckable(False)
+        vbox = QVBoxLayout()
+        groupbox.setLayout(vbox)
+        vbox.addWidget(QLabel("Scale factor"))
+        vbox.addWidget(self.slider_scale_factor)
+        vbox.addWidget(QLabel("Neighbours"))
+        vbox.addWidget(self.slider_neighbours)
 
-        processButton = QPushButton("Find face")
-        processButton.clicked.connect(lambda: self.processImage('res', self.currentFile))
+        # button for loading images to GUI
+        load_button = QPushButton("Load image")
+        load_button.clicked.connect(lambda: self.openImage())
 
-        gridLayout.addWidget(self.label, 0, 0)
-        gridLayout.addWidget(loadButton, 1, 0, 1, 1, Qt.AlignCenter)
-        gridLayout.addWidget(processButton, 1, 1, 1, 1, Qt.AlignCenter)
-        gridLayout.addWidget(QLabel("test"), 0, 1, Qt.AlignCenter)
-        self.setLayout(gridLayout)
+        # button for activating image processing
+        process_button = QPushButton("Find face")
+        process_button.clicked.connect(lambda: self.processImage('res', self.current_file))
+
+        grid_layout.addWidget(self.label, 0, 0)
+        grid_layout.addWidget(load_button, 1, 0, 1, 1, Qt.AlignCenter)
+        grid_layout.addWidget(process_button, 1, 1, 1, 1, Qt.AlignCenter)
+        grid_layout.addWidget(groupbox, 0, 1, Qt.AlignCenter)
+        self.setLayout(grid_layout)
         self.show()
 
     def paintEvent(self, e):
@@ -54,12 +73,12 @@ class App(QWidget):
         painter.drawRect(10, 10, 552, 502)
 
     def openImage(self):
-        imagePath, _ = QFileDialog.getOpenFileName()
-        self.currentFile = os.path.basename(imagePath)
-        self.setImageToLabel(imagePath)
+        image_path, _ = QFileDialog.getOpenFileName()
+        self.current_file = os.path.basename(image_path)
+        self.set_image_to_label(image_path)
 
-    def setImageToLabel(self, imagePath):
-        pixmap = QPixmap(imagePath)
+    def set_image_to_label(self, image_path):
+        pixmap = QPixmap(image_path)
         self.label.setPixmap(pixmap.scaled(self.label.size(), QtCore.Qt.IgnoreAspectRatio))
 
     def setImageToLabelFromImage(self, image):
@@ -80,6 +99,10 @@ class App(QWidget):
             img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         self.setImageToLabelFromImage(img)
+
+    def valuechange_scalefactor(self):
+        value = self.slider_scale_factor.value()
+        self.scale_factor = value
 
 
 if __name__ == '__main__':
