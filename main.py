@@ -26,6 +26,8 @@ class App(QWidget):
         self.neighbours = 3  # try different values of minimum neighbours like 3,4,5,6
         self.slider_scale_factor = QSlider(Qt.Horizontal)
         self.slider_neighbours = QSlider(Qt.Horizontal)
+        self.param_visibility = False
+        self.groupbox = QGroupBox("Parameters")
         self.initUI()
 
     def initUI(self):
@@ -43,14 +45,32 @@ class App(QWidget):
         grid_layout = QGridLayout()
 
         # setup parameters box
-        groupbox = QGroupBox("Parameters")
-        groupbox.setCheckable(False)
+        self.groupbox.setCheckable(False)
         vbox = QVBoxLayout()
-        groupbox.setLayout(vbox)
+        self.groupbox.setLayout(vbox)
+
+        #setup slider for parameter 1
         vbox.addWidget(QLabel("Scale factor"))
         vbox.addWidget(self.slider_scale_factor)
+        self.slider_scale_factor.setMinimum(105)
+        self.slider_scale_factor.setMaximum(200)
+        self.slider_scale_factor.setValue(150)
+        self.slider_scale_factor.setTickInterval(10)
+
+
+        # setup slider for parameter 2
         vbox.addWidget(QLabel("Neighbours"))
         vbox.addWidget(self.slider_neighbours)
+        self.slider_neighbours.setMinimum(1)
+        self.slider_neighbours.setMaximum(10)
+        self.slider_neighbours.setValue(5)
+        self.slider_neighbours.setTickInterval(9)
+
+        #connect sliders to corresponding methods
+        self.slider_scale_factor.valueChanged.connect(self.valuechange_scalefactor)
+        self.slider_neighbours.valueChanged.connect(self.valuechange_neighbours)
+
+        self.groupbox.setVisible(self.param_visibility)
 
         # button for loading images to GUI
         load_button = QPushButton("Load image")
@@ -60,10 +80,12 @@ class App(QWidget):
         process_button = QPushButton("Find face")
         process_button.clicked.connect(lambda: self.processImage('res', self.current_file))
 
+        # setting up elements on the layout
         grid_layout.addWidget(self.label, 0, 0)
         grid_layout.addWidget(load_button, 1, 0, 1, 1, Qt.AlignCenter)
         grid_layout.addWidget(process_button, 1, 1, 1, 1, Qt.AlignCenter)
-        grid_layout.addWidget(groupbox, 0, 1, Qt.AlignCenter)
+        grid_layout.addWidget(self.groupbox, 0, 1, Qt.AlignCenter)
+
         self.setLayout(grid_layout)
         self.show()
 
@@ -76,6 +98,7 @@ class App(QWidget):
         image_path, _ = QFileDialog.getOpenFileName()
         self.current_file = os.path.basename(image_path)
         self.set_image_to_label(image_path)
+        self.groupbox.setVisible(True)
 
     def set_image_to_label(self, image_path):
         pixmap = QPixmap(image_path)
@@ -101,8 +124,14 @@ class App(QWidget):
         self.setImageToLabelFromImage(img)
 
     def valuechange_scalefactor(self):
-        value = self.slider_scale_factor.value()
+        value = self.slider_scale_factor.value()/100
+        print(value)
         self.scale_factor = value
+
+    def valuechange_neighbours(self):
+        value = self.slider_neighbours.value()
+        print(value)
+        self.neighbours = value
 
 
 if __name__ == '__main__':
